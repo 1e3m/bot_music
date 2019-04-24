@@ -23,6 +23,7 @@ bot.add_cog(TextBot(bot))
 async def on_ready():
     print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
 
-bot.run(os.environ['GACHIBOT_TOKEN'])
+#bot.run(os.environ['GACHIBOT_TOKEN'])
+bot.run('NTcwNjQ3MTQyMjgxMjQ4ODUx.XMDOVw.bpSPoSR9vdHtJYjaV8jbxtC-6LU')
 
 
