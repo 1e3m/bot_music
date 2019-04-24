@@ -25,17 +25,18 @@ class TextBot(commands.Cog):
     async def pupk(self, ctx):
         """ !pubg alias """
         pass
-
-    #async def on_message(self, ctx):
-    # Emoji reacts to someone who says 'pubg'
-    #    print('gav')
-    #    if ctx.author == self.bot.user:
-    #        return
-    #    if 'pubg' in ctx.content.lower() or 'pupk' in ctx.content.lower() or 'пубг' in ctx.content.lower() or 'пабг' in ctx.content.lower() or 'пупк' in ctx.content.lower():
-    #        gav = get(self.bot.emojis, name='gav')
-    #        await ctx.add_reaction(gav)
-    #        await self.bot.process_commands(ctx)
-
+    '''
+    @commands.event
+    async def on_message(self, ctx):
+        """ Emoji reacts to someone who says 'pubg' """
+        print('gav')
+        if ctx.author == self.bot.user:
+            return
+        if 'pubg' in ctx.content.lower() or 'pupk' in ctx.content.lower() or 'пубг' in ctx.content.lower() or 'пабг' in ctx.content.lower() or 'пупк' in ctx.content.lower():
+            gav = get(self.bot.emojis, name='gav')
+            await ctx.add_reaction(gav)
+            await self.bot.process_commands(ctx)
+    '''
     @pubg.before_invoke
     @pupk.before_invoke
     async def __pubg(self, ctx):
