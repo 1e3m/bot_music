@@ -6,7 +6,17 @@ import asyncio
 from discord.ext import commands
 from discord.utils import get
 from .ytdl import YTDLSource
+from collections import deque
 
+class Owner():
+	def __init__(self, Id, Channel, Hash, State: bool):
+		self.Id = Id
+		self.Channel = Channel
+		self.Hash = Hash
+		self.State = State
+
+	def __del__(self):
+		print("clear session")
 
 class MusicBot(commands.Cog):
 
@@ -16,12 +26,83 @@ class MusicBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.volume_lvl = 0.5
+
         self.owner = None
         self.owner_channel = None
+
+        self.autoplay = 0 #autoplay next track yt
+        self.owner_session = []
 
         with open('song_list.json') as json_data:
             self.gachi_list = json.load(json_data)
 
+        MusicBot.create_session(self, bot)
+
+    def create_session(self, bot):
+    	print(self.bot.users)
+    	for user in self.bot.get_all_members():
+    		self.owner_session.append(Owner(user.id, user.channel.id, ranrom.random(), False))
+    		print("Usr appended (Id: {0}), (chId: {1}), (rnd: {2}), (State: {3}) \n".format(user.Id, user.Channel, user.Hash, user.State))
+    	print("Session appended")	
+
+    def get_owner_session(self, Id):
+    	for x in self.owner_session:
+    		if x.Id == Id:
+    			return x
+
+    def set_owner_session(self,Id):
+    	for x in self.owner_session:
+    		if x.Id == Id:
+    			x.State = True
+    		else:
+    			x.State = False
+
+    def print_session(self):
+    	print("-----------------------------SESSION TABLE-----------------------------------------")
+    	for user in self.owner_session:
+    		 print("User = (Id: {0}), (chId: {1}), (rnd: {2}), (State: {3}) \n".format(user.Id, user.Channel, user.Hash, user.State))
+    	print("-----------------------------------------------------------------------------------")
+
+
+    @commands.command()
+    async def comeon(self, ctx, *, channel: discord.VoiceChannel=None):
+        """ Joins a voice channel """
+        #MusicBot.print_session(self)
+
+        if self.owner is None:
+            if ctx.channel.id == MusicBot.id_channel:
+                if channel is None and ctx.author.voice is None:
+                    return await ctx.send("You are not connected to a voice channel.")
+
+                channel = channel or ctx.author.voice.channel
+                if ctx.voice_client:
+                    await ctx.voice_client.move_to(channel)
+                else:
+                    await channel.connect()
+
+                #MusicBot.create_session(self, ctx.guild.users)
+                #MusicBot.print_session(self)    
+
+                self.owner = ctx.author.id
+
+                #self.owner_session.append(Owner(ctx.author.id, ctx.author.voice.channel.id, random.random(), True))
+
+                #print("user: " + MusicBot.get_owner_session(self, ctx.author.id))	
+                #user = MusicBot.get_owner_session(self, ctx.author.id)
+
+                #print("\n")
+                #print(str(MusicBot.get_owner_session(self, ctx.author.id).Id))	
+                #print("\n")
+                #print("User = (Id: {0}), (chId: {1}), (rnd: {2}), (State: {3})".format(user.Id, user.Channel, user.Hash, user.State))	
+                #print("\n")
+
+                print("comeon func")
+                print("owner: " +str(self.owner))
+        else:
+            await MusicBot.__isNotOwner(self, ctx)
+
+    #old_version
+    '''   
     @commands.command()
     async def comeon(self, ctx, *, channel: discord.VoiceChannel=None):
         """ Joins a voice channel """
@@ -35,11 +116,26 @@ class MusicBot(commands.Cog):
                     await ctx.voice_client.move_to(channel)
                 else:
                     await channel.connect()
+
                 self.owner = ctx.author.id
+
+                self.owner_session.append(Owner(ctx.author.id, ctx.author.voice.channel.id, random.random(), True))
+
+                #print("user: " + MusicBot.get_owner_session(self, ctx.author.id))	
+                user = MusicBot.get_owner_session(self, ctx.author.id)
+
+                print("\n")
+                print(str(MusicBot.get_owner_session(self, ctx.author.id).Id))	
+                print("\n")
+                print("User = (Id: {0}), (chId: {1}), (rnd: {2}), (State: {3})".format(user.Id, user.Channel, user.Hash, user.State))	
+                print("\n")
+
+                print("session: " +self.owner_session[0])	
                 print("comeon func")
                 print("owner: " +str(self.owner))
         else:
             await MusicBot.__isNotOwner(self, ctx)
+    '''
 
     @commands.command()
     async def gachi(self, ctx):
@@ -116,6 +212,12 @@ class MusicBot(commands.Cog):
         else:
             await MusicBot.__isNotOwner(self, ctx)
 
+    @commands.command()
+    async def forward(self, ctx, second: int):
+    	if ctx.voice_client:
+    		player = ctx.voice_client.source
+    		print("playre: " +str(player))
+
     @gachi.before_invoke
     @yt.before_invoke
     async def __ensure_voice(self, ctx):
@@ -127,12 +229,18 @@ class MusicBot(commands.Cog):
         elif ctx.voice_client.is_playing():
             ctx.voice_client.stop()
 
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+    	if(self.owner is not None):
+    		if member.id == self.owner and after.channel.id != self.owner_channel:
+    			self.owner = None 
+
     async def __yt(self, ctx, url, silent=False):
-        async with ctx.typing():
+        async with ctx.typing():        	
             player = await YTDLSource.from_url(
                 url,
                 loop=self.bot.loop,
-                stream=False,
+                stream=True,
                 volume=self.volume_lvl
             )
             ctx.voice_client.play(
@@ -152,11 +260,13 @@ class MusicBot(commands.Cog):
             fulltime = float(player.time.total_seconds())
             delay = float(player.time.total_seconds() + 5.0)
 
+            print("time(full,delay): {0} , {1}".format(fulltime, delay))
+
             if delay > 305:
                 delay = 305
 
             await asyncio.sleep(delay)
-
+            print("unsleep")
             if last_owner == self.owner and (ctx.author.voice is None or self.owner_channel != ctx.author.voice.channel.id):
                 await ctx.voice_client.disconnect()
                 self.owner = None
