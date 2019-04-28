@@ -5,6 +5,7 @@ class User():
         self.Id = Id
         self.Channel = Channel
         self.State = State
+        self.Users = []
 
     def __del__(self):
         print("clear session")

@@ -20,9 +20,9 @@ class MusicBot(commands.Cog, User):
         self.volume_lvl = 0.5
         self.owner_last_id = None
         self.owner_last_channel = None
+        self.Users = []
 
         self.autoplay = 0 #autoplay next track yt
-        self.Users = []
 
         with open('song_list.json') as json_data:
             self.gachi_list = json.load(json_data)
@@ -43,6 +43,8 @@ class MusicBot(commands.Cog, User):
                     await channel.connect()   
 
                 self.set_owner(ctx.author.id)
+                self.owner_last_channel = self.get_owner_channel()
+                self.owner_last_id = self.get_owner_id()
 
                 print("comeon func")
         else:
@@ -55,7 +57,7 @@ class MusicBot(commands.Cog, User):
         if self.get_owner_id() is None:
             self.set_owner(ctx.author.id)
 
-        if ctx.author.id == self.get_owner_id(self.Users):
+        if ctx.author.id == self.get_owner_id():
             if ctx.channel.id == MusicBot.id_channel:
                 song = random.choice(self.gachi_list)
                 url = 'https://www.youtube.com/watch?v={}'.format(song['url'])
@@ -119,7 +121,7 @@ class MusicBot(commands.Cog, User):
                     return await ctx.send('Oh, fuck you leather man')
 
                 await ctx.voice_client.disconnect()
-            self.clr_owner(self.Users)
+            self.clr_owner()
         else:
             await MusicBot.__isNotOwner(self, ctx)
 
