@@ -174,7 +174,10 @@ class MusicBot(commands.Cog, User):
 
     @commands.Cog.listener()
     async def on_connect(self):
-        User.get_users(self,self.bot.get_all_members())  # self.bot.get_all_members() не всегда получает список пользователей сервера при коннекте, хз что за херня
+    	#upd более стабильный вариант, через members, но все равно иногда не получает пользователей
+        members = self.bot.get_all_members()
+        User.get_users(self,members)
+        #User.get_users(self,self.bot.get_all_members())  # self.bot.get_all_members() не всегда получает список пользователей сервера при коннекте, хз что за херня
 
 
     async def __yt(self, ctx, url, silent=False):
