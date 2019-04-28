@@ -7,18 +7,10 @@ from discord.ext import commands
 from discord.utils import get
 from .ytdl import YTDLSource
 from collections import deque
+from .user import User
 
-class Owner():
-	def __init__(self, Id, Channel, Hash, State: bool):
-		self.Id = Id
-		self.Channel = Channel
-		self.Hash = Hash
-		self.State = State
 
-	def __del__(self):
-		print("clear session")
-
-class MusicBot(commands.Cog):
+class MusicBot(commands.Cog, User):
 
 	#id_channel = 570419462453592076	#release
     id_channel = 570646876207054859		#test
@@ -26,50 +18,20 @@ class MusicBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.volume_lvl = 0.5
-
-        self.owner = None
-        self.owner_channel = None
+        self.owner_last_id = None
+        self.owner_last_channel = None
 
         self.autoplay = 0 #autoplay next track yt
-        self.owner_session = []
+        self.Users = []
 
         with open('song_list.json') as json_data:
             self.gachi_list = json.load(json_data)
 
-        MusicBot.create_session(self, bot)
-
-    def create_session(self, bot):
-    	print(self.bot.users)
-    	for user in self.bot.get_all_members():
-    		self.owner_session.append(Owner(user.id, user.channel.id, ranrom.random(), False))
-    		print("Usr appended (Id: {0}), (chId: {1}), (rnd: {2}), (State: {3}) \n".format(user.Id, user.Channel, user.Hash, user.State))
-    	print("Session appended")	
-
-    def get_owner_session(self, Id):
-    	for x in self.owner_session:
-    		if x.Id == Id:
-    			return x
-
-    def set_owner_session(self,Id):
-    	for x in self.owner_session:
-    		if x.Id == Id:
-    			x.State = True
-    		else:
-    			x.State = False
-
-    def print_session(self):
-    	print("-----------------------------SESSION TABLE-----------------------------------------")
-    	for user in self.owner_session:
-    		 print("User = (Id: {0}), (chId: {1}), (rnd: {2}), (State: {3}) \n".format(user.Id, user.Channel, user.Hash, user.State))
-    	print("-----------------------------------------------------------------------------------")
-
-
     @commands.command()
     async def comeon(self, ctx, *, channel: discord.VoiceChannel=None):
         """ Joins a voice channel """
-        #MusicBot.print_session(self)
 
-        if self.owner is None:
+        if self.get_owner_id() is None or self.get_owner_id() == ctx.author.id:
             if ctx.channel.id == MusicBot.id_channel:
                 if channel is None and ctx.author.voice is None:
                     return await ctx.send("You are not connected to a voice channel.")
@@ -78,72 +40,22 @@ class MusicBot(commands.Cog):
                 if ctx.voice_client:
                     await ctx.voice_client.move_to(channel)
                 else:
-                    await channel.connect()
+                    await channel.connect()   
 
-                #MusicBot.create_session(self, ctx.guild.users)
-                #MusicBot.print_session(self)    
-
-                self.owner = ctx.author.id
-
-                #self.owner_session.append(Owner(ctx.author.id, ctx.author.voice.channel.id, random.random(), True))
-
-                #print("user: " + MusicBot.get_owner_session(self, ctx.author.id))	
-                #user = MusicBot.get_owner_session(self, ctx.author.id)
-
-                #print("\n")
-                #print(str(MusicBot.get_owner_session(self, ctx.author.id).Id))	
-                #print("\n")
-                #print("User = (Id: {0}), (chId: {1}), (rnd: {2}), (State: {3})".format(user.Id, user.Channel, user.Hash, user.State))	
-                #print("\n")
+                self.set_owner(ctx.author.id)
 
                 print("comeon func")
-                print("owner: " +str(self.owner))
         else:
             await MusicBot.__isNotOwner(self, ctx)
 
-    #old_version
-    '''   
-    @commands.command()
-    async def comeon(self, ctx, *, channel: discord.VoiceChannel=None):
-        """ Joins a voice channel """
-        if self.owner is None:
-            if ctx.channel.id == MusicBot.id_channel:
-                if channel is None and ctx.author.voice is None:
-                    return await ctx.send("You are not connected to a voice channel.")
-
-                channel = channel or ctx.author.voice.channel
-                if ctx.voice_client:
-                    await ctx.voice_client.move_to(channel)
-                else:
-                    await channel.connect()
-
-                self.owner = ctx.author.id
-
-                self.owner_session.append(Owner(ctx.author.id, ctx.author.voice.channel.id, random.random(), True))
-
-                #print("user: " + MusicBot.get_owner_session(self, ctx.author.id))	
-                user = MusicBot.get_owner_session(self, ctx.author.id)
-
-                print("\n")
-                print(str(MusicBot.get_owner_session(self, ctx.author.id).Id))	
-                print("\n")
-                print("User = (Id: {0}), (chId: {1}), (rnd: {2}), (State: {3})".format(user.Id, user.Channel, user.Hash, user.State))	
-                print("\n")
-
-                print("session: " +self.owner_session[0])	
-                print("comeon func")
-                print("owner: " +str(self.owner))
-        else:
-            await MusicBot.__isNotOwner(self, ctx)
-    '''
 
     @commands.command()
     async def gachi(self, ctx):
         """ Plays a song from the gachi list """
-        if self.owner is None:
-            self.owner = ctx.author.id
+        if self.get_owner_id() is None:
+            self.set_owner(ctx.author.id)
 
-        if ctx.author.id == self.owner:
+        if ctx.author.id == self.get_owner_id(self.Users):
             if ctx.channel.id == MusicBot.id_channel:
                 song = random.choice(self.gachi_list)
                 url = 'https://www.youtube.com/watch?v={}'.format(song['url'])
@@ -154,21 +66,20 @@ class MusicBot(commands.Cog):
     @commands.command()
     async def yt(self, ctx, *, url):
         """ Play from the given url / search for a song """
-        if self.owner is None:
-            self.owner = ctx.author.id
+        if self.get_owner_id() is None:
+            self.set_owner(ctx.author.id)
 
-        if ctx.author.id == self.owner:
+        if ctx.author.id == self.get_owner_id():
             if ctx.author.voice is not None:
                 if ctx.channel.id == MusicBot.id_channel:
                     await self.__yt(ctx, url)
-                    print("yt owner: " +str(self.owner))
         else:
             await MusicBot.__isNotOwner(self, ctx)
 
     @commands.command()
     async def pause(self, ctx):
         """ Pauses current track """
-        if ctx.author.id == self.owner:
+        if ctx.author.id == self.get_owner_id():
             if ctx.channel.id == MusicBot.id_channel:
                 if ctx.voice_client and ctx.voice_client.is_playing():
                     ctx.voice_client.pause()
@@ -178,7 +89,7 @@ class MusicBot(commands.Cog):
     @commands.command()
     async def resume(self, ctx):
         """ Resumes current track """
-        if ctx.author.id == self.owner:
+        if ctx.author.id == self.get_owner_id():
             if ctx.channel.id == MusicBot.id_channel:
                 if ctx.voice_client and ctx.voice_client.is_paused():
                     ctx.voice_client.resume()
@@ -188,6 +99,7 @@ class MusicBot(commands.Cog):
     @commands.command()
     async def volume(self, ctx, volume: int):
         """Changes the player's volume """
+
         if ctx.channel.id == MusicBot.id_channel:        
 
             if ctx.voice_client is None:
@@ -200,15 +112,14 @@ class MusicBot(commands.Cog):
     @commands.command()
     async def fuckyou(self, ctx):
         """ Stops and disconnects the bot from voice """
-        if ctx.author.id == self.owner:
+        if ctx.author.id == self.get_owner_id():
             if ctx.channel.id == MusicBot.id_channel:
                 sosna = ctx.guild.get_member(188000465550573569)
                 if ctx.author == sosna:
                     return await ctx.send('Oh, fuck you leather man')
 
                 await ctx.voice_client.disconnect()
-            self.owner = None
-            print("owner: " +str(self.owner))
+            self.clr_owner(self.Users)
         else:
             await MusicBot.__isNotOwner(self, ctx)
 
@@ -231,16 +142,42 @@ class MusicBot(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-    	if(self.owner is not None):
-    		if member.id == self.owner and after.channel.id != self.owner_channel:
-    			self.owner = None 
+        print("Voice state has been changed.")
+
+        if after.channel:
+            self.upd_user_channel(member.id, after.channel)         
+
+            if member.id == self.get_owner_id() and member.voice.channel:
+                print("one")
+                if member.id == self.get_owner_id() and after.channel.id != self.owner_last_channel.id:
+                    print("owner leave channel")
+                    self.clr_owner()
+
+        
+            print("Get owner: " +str(self.get_owner_id()))
+
+            if(self.get_owner_id() is None):
+                if member.id == self.owner_last_id and after.channel.id == self.owner_last_channel.id:
+                    print("Owner reconnect")
+                    self.set_owner(member.id)
+        elif member.id == self.get_owner_id():
+            print("owner disconnect voice")
+            self.clr_owner()
+
+        self.print_users()
+
+    @commands.Cog.listener()
+    async def on_connect(self):
+        print("on_connect()")
+        User.get_users(self,self.bot.get_all_members())
+
 
     async def __yt(self, ctx, url, silent=False):
         async with ctx.typing():        	
             player = await YTDLSource.from_url(
                 url,
                 loop=self.bot.loop,
-                stream=True,
+                stream=False,
                 volume=self.volume_lvl
             )
             ctx.voice_client.play(
@@ -250,8 +187,8 @@ class MusicBot(commands.Cog):
 
         if not silent:
 
-            last_owner = self.owner
-            self.owner_channel = ctx.author.voice.channel.id
+            self.owner_last_channel = self.get_owner_channel()
+            self.owner_last_id = self.get_owner_id()
 
             await ctx.send(
                 'Now playing: {0} [{1}]'.format(player.title, player.time)
@@ -260,24 +197,26 @@ class MusicBot(commands.Cog):
             fulltime = float(player.time.total_seconds())
             delay = float(player.time.total_seconds() + 5.0)
 
-            print("time(full,delay): {0} , {1}".format(fulltime, delay))
+            print("delay time(full,delay): {0} , {1}".format(fulltime, delay))
 
             if delay > 305:
                 delay = 305
 
+            print("To be sleep thread...")
             await asyncio.sleep(delay)
+
             print("unsleep")
-            if last_owner == self.owner and (ctx.author.voice is None or self.owner_channel != ctx.author.voice.channel.id):
+            if self.get_owner_id() is None:
                 await ctx.voice_client.disconnect()
-                self.owner = None
+                self.clr_owner()
                 return
             else:
                 print("owner is not None or owner not change")
 
             await asyncio.sleep(fulltime - delay)
+            #if self.get_owner_id(self.Users) is None:
             if ctx.voice_client is not None:
                 await ctx.voice_client.disconnect()
-                self.owner = None
 
 
 
