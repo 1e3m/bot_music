@@ -47,8 +47,15 @@ class MusicBot(commands.Cog, User):
                 self.owner_last_id = self.get_owner_id()
 
                 print("comeon func")
+
+                await asyncio.sleep(15)    
+                if ctx.voice_client and ctx.voice_client.is_playing() == False:
+                    await ctx.voice_client.disconnect()
+                    self.clr_owner()
         else:
             await MusicBot.__isNotOwner(self, ctx)
+
+        
 
 
     @commands.command()
@@ -145,16 +152,13 @@ class MusicBot(commands.Cog, User):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         print("Voice state has been changed.")
+        self.upd_user_channel(member.id, after.channel)  
 
-        if after.channel:
-            self.upd_user_channel(member.id, after.channel)         
-
-            if member.id == self.get_owner_id() and member.voice.channel:
-                print("one")
-                if member.id == self.get_owner_id() and after.channel.id != self.owner_last_channel.id:
+        if after.channel and (member.id == self.get_owner_id or member.id == self.owner_last_id):
+            if member.voice.channel:
+                if after.channel.id != self.owner_last_channel.id:
                     print("owner leave channel")
                     self.clr_owner()
-
         
             print("Get owner: " +str(self.get_owner_id()))
 
@@ -170,8 +174,7 @@ class MusicBot(commands.Cog, User):
 
     @commands.Cog.listener()
     async def on_connect(self):
-        print("on_connect()")
-        User.get_users(self,self.bot.get_all_members())
+        User.get_users(self,self.bot.get_all_members())  # self.bot.get_all_members() не всегда получает список пользователей сервера при коннекте, хз что за херня
 
 
     async def __yt(self, ctx, url, silent=False):
@@ -215,10 +218,12 @@ class MusicBot(commands.Cog, User):
             else:
                 print("owner is not None or owner not change")
 
-            await asyncio.sleep(fulltime - delay)
-            #if self.get_owner_id(self.Users) is None:
+            if(delay < fulltime):
+                await asyncio.sleep(fulltime - delay)
+
             if ctx.voice_client is not None:
                 await ctx.voice_client.disconnect()
+                self.clr_owner()
 
 
 
