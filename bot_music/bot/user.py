@@ -12,6 +12,28 @@ class User():
     def cprint(self):
         print("User = (Id: {0}), (chId: {1}), (State: {2}) \n".format(self.Id, self.Channel, self.State))
 
+    def add_user(self, member):
+        #if member.id not in self.Users:
+        for user in self.Users:
+            if user.Id == member.id:
+                return
+
+        if member.voice:
+            u = User(member.id,member.voice.channel, False)
+        else:
+            u = User(member.id,None, False)
+        self.Users.append(u)
+        if self.debug_log: u.cprint()
+        self.print_users()
+
+    def remove_user(self, member_id):
+        #if member_id in self.Users:
+        for user in self.Users:
+            if user.Id == member_id:                
+                self.Users.remove(user)
+                self.debuglog("User remove: " +str(member_id))
+                self.print_users()
+
     def get_users(self, users):
         self.debuglog("------------------------------------------Users appended------------------------------------------------")
         for user in users:
@@ -55,7 +77,6 @@ class User():
         for x in self.Users:
             if x.Id == Id:
                 return x.Channel
-
 
     def print_users(self):
     	print("-----------------------------Users-----------------------------------------")

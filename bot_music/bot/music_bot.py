@@ -138,7 +138,7 @@ class MusicBot(commands.Cog, User):
     		player = ctx.voice_client.source
     		print("playre: " +str(player))
     '''
-    
+
     @gachi.before_invoke
     @yt.before_invoke
     async def __ensure_voice(self, ctx):
@@ -179,6 +179,17 @@ class MusicBot(commands.Cog, User):
         members = self.bot.get_all_members()
         User.get_users(self,members)
 
+    @commands.Cog.listener()
+    async def on_member_join(self,member):
+        #self.debug_log
+        print("user join on server: " + str(member.id))
+        self.add_user(member)
+
+    @commands.Cog.listener()
+    async def on_member_remove(self,member):
+        #self.debug_log
+        print("user leave with server: " + str(member.id))
+        self.remove_user(member.id)
 
     async def __yt(self, ctx, url, silent=False):
         async with ctx.typing():        	
