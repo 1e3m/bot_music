@@ -51,6 +51,11 @@ class User():
     		x.State = False
     	print("Owner is clear")
 
+    def get_bot_channel(self, Id):
+        for x in self.Users:
+            if x.Id == Id:
+                return x.Channel
+
 
     def print_users(self):
     	print("-----------------------------Users-----------------------------------------")

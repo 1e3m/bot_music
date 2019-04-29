@@ -52,6 +52,8 @@ class MusicBot(commands.Cog, User):
                 if ctx.voice_client and ctx.voice_client.is_playing() == False:
                     await ctx.voice_client.disconnect()
                     self.clr_owner()
+                    self.owner_last_channel = None
+                    self.owner_last_id = None
         else:
             await MusicBot.__isNotOwner(self, ctx)
 
@@ -61,20 +63,18 @@ class MusicBot(commands.Cog, User):
     @commands.command()
     async def gachi(self, ctx):
         """ Plays a song from the gachi list """
-        if self.get_owner_id() is None:
-            self.set_owner(ctx.author.id)
 
-        if ctx.author.id == self.get_owner_id():
-            if ctx.channel.id == MusicBot.id_channel:
-                song = random.choice(self.gachi_list)
-                url = 'https://www.youtube.com/watch?v={}'.format(song['url'])
-                await self.__yt(ctx, url)
+        if self.__isOwner(ctx):
+            song = random.choice(self.gachi_list)
+            url = 'https://www.youtube.com/watch?v={}'.format(song['url'])
+            await self.__yt(ctx, url)
         else:
             await MusicBot.__isNotOwner(self, ctx)
 
     @commands.command()
     async def yt(self, ctx, *, url):
         """ Play from the given url / search for a song """
+
         if self.get_owner_id() is None:
             self.set_owner(ctx.author.id)
 
@@ -88,20 +88,20 @@ class MusicBot(commands.Cog, User):
     @commands.command()
     async def pause(self, ctx):
         """ Pauses current track """
-        if ctx.author.id == self.get_owner_id():
-            if ctx.channel.id == MusicBot.id_channel:
-                if ctx.voice_client and ctx.voice_client.is_playing():
-                    ctx.voice_client.pause()
+
+        if self.__isOwner(ctx, False):
+            if ctx.voice_client and ctx.voice_client.is_playing():
+                ctx.voice_client.pause()
         else:
             await MusicBot.__isNotOwner(self, ctx)
 
     @commands.command()
     async def resume(self, ctx):
         """ Resumes current track """
-        if ctx.author.id == self.get_owner_id():
-            if ctx.channel.id == MusicBot.id_channel:
-                if ctx.voice_client and ctx.voice_client.is_paused():
-                    ctx.voice_client.resume()
+
+        if self.__isOwner(ctx, False):
+            if ctx.voice_client and ctx.voice_client.is_paused():
+                ctx.voice_client.resume()
         else:
             await MusicBot.__isNotOwner(self, ctx)
 
@@ -109,8 +109,7 @@ class MusicBot(commands.Cog, User):
     async def volume(self, ctx, volume: int):
         """Changes the player's volume """
 
-        if ctx.channel.id == MusicBot.id_channel:        
-
+        if ctx.channel.id == MusicBot.id_channel:     
             if ctx.voice_client is None:
                 return await ctx.send("Not connected to a voice channel.")
 
@@ -121,13 +120,9 @@ class MusicBot(commands.Cog, User):
     @commands.command()
     async def fuckyou(self, ctx):
         """ Stops and disconnects the bot from voice """
-        if ctx.author.id == self.get_owner_id():
-            if ctx.channel.id == MusicBot.id_channel:
-                sosna = ctx.guild.get_member(188000465550573569)
-                if ctx.author == sosna:
-                    return await ctx.send('Oh, fuck you leather man')
 
-                await ctx.voice_client.disconnect()
+        if self.__isOwner(ctx, False):
+            await ctx.voice_client.disconnect()
             self.clr_owner()
         else:
             await MusicBot.__isNotOwner(self, ctx)
@@ -152,7 +147,8 @@ class MusicBot(commands.Cog, User):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         print("Voice state has been changed.")
-        self.upd_user_channel(member.id, after.channel)  
+        self.upd_user_channel(member.id, after.channel)
+        bot_channel = self.get_bot_channel(self.bot.user.id)
 
         if after.channel and (member.id == self.get_owner_id or member.id == self.owner_last_id):
             if member.voice.channel:
@@ -163,7 +159,7 @@ class MusicBot(commands.Cog, User):
             print("Get owner: " +str(self.get_owner_id()))
 
             if(self.get_owner_id() is None):
-                if member.id == self.owner_last_id and after.channel.id == self.owner_last_channel.id:
+                if member.id == self.owner_last_id and after.channel.id == self.owner_last_channel.id and bot_channel and bot_channel.id == self.owner_last_channel.id: 
                     print("Owner reconnect")
                     self.set_owner(member.id)
         elif member.id == self.get_owner_id():
@@ -227,9 +223,22 @@ class MusicBot(commands.Cog, User):
             if ctx.voice_client is not None:
                 await ctx.voice_client.disconnect()
                 self.clr_owner()
+                self.owner_last_channel = None
+                self.owner_last_id = None
 
 
 
     async def __isNotOwner(self, ctx):
         await ctx.send("You are not the owner of the running command.")
+
+
+    def __isOwner(self, ctx, SetOwner: bool = True):
+        if SetOwner:
+            if self.get_owner_id() is None:
+                self.set_owner(ctx.author.id)
+
+        if ctx.author.id == self.get_owner_id():
+            if ctx.channel.id == MusicBot.id_channel:
+                return True
+        return False    	
 
