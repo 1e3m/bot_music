@@ -13,7 +13,7 @@ class User():
         print("User = (Id: {0}), (chId: {1}), (State: {2}) \n".format(self.Id, self.Channel, self.State))
 
     def get_users(self, users):
-        iself.debuglog("------------------------------------------Users appended------------------------------------------------")
+        self.debuglog("------------------------------------------Users appended------------------------------------------------")
         for user in users:
             if user.voice:
                u = User(user.id, user.voice.channel, False)
