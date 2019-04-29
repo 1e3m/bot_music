@@ -24,7 +24,7 @@ class User():
             u = User(member.id,None, False)
         self.Users.append(u)
         if self.debug_log: u.cprint()
-        self.print_users()
+        #self.print_users()
 
     def remove_user(self, member_id):
         #if member_id in self.Users:
@@ -32,7 +32,7 @@ class User():
             if user.Id == member_id:                
                 self.Users.remove(user)
                 self.debuglog("User remove: " +str(member_id))
-                self.print_users()
+                #self.print_users()
 
     def get_users(self, users):
         self.debuglog("------------------------------------------Users appended------------------------------------------------")
