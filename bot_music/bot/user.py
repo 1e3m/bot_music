@@ -13,15 +13,15 @@ class User():
         print("User = (Id: {0}), (chId: {1}), (State: {2}) \n".format(self.Id, self.Channel, self.State))
 
     def get_users(self, users):
-        print("------------------------------------------Users appended------------------------------------------------")
+        iself.debuglog("------------------------------------------Users appended------------------------------------------------")
         for user in users:
             if user.voice:
                u = User(user.id, user.voice.channel, False)
             else:
                 u = User(user.id, None, False)
             self.Users.append(u)
-            u.cprint()
-        print("------------------------------------------------------------------------------------------------------")	
+            if self.debug_log: u.cprint()
+        self.debuglog("------------------------------------------------------------------------------------------------------")	
 
     def get_owner_id(self):
     	for x in self.Users:
@@ -38,18 +38,18 @@ class User():
     	for x in self.Users:
             if x.Id == Id:
                 x.State = True
-                print("owner_id set to:" + str(x.Id))
+                self.debuglog("owner_id set to:" + str(x.Id))
 
     def upd_user_channel(self,Id,Channel):
     	for x in self.Users:
             if x.Id == Id:
                 x.Channel = Channel
-                print("Channel set to:" + str(x.Channel))
+                self.debuglog("Channel set to:" + str(x.Channel))
 
     def clr_owner(self):
     	for x in self.Users:
     		x.State = False
-    	print("Owner is clear")
+    	self.debuglog("Owner is clear")
 
     def get_bot_channel(self, Id):
         for x in self.Users:
@@ -62,4 +62,8 @@ class User():
     	for user in self.Users:
     		user.cprint()
     	print("-----------------------------------------------------------------------------------")
+
+    def debuglog(self,message: str):
+        if self.debug_log:
+            print(message)
 

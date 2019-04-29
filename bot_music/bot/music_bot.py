@@ -12,10 +12,15 @@ from .user import User
 
 class MusicBot(commands.Cog, User):
 
+    
+
 	#id_channel = 570419462453592076	#release
     id_channel = 570646876207054859		#test
 
     def __init__(self, bot):
+
+        self.debug_log = True
+
         self.bot = bot
         self.volume_lvl = 0.5
         self.owner_last_id = None
@@ -46,7 +51,7 @@ class MusicBot(commands.Cog, User):
                 self.owner_last_channel = self.get_owner_channel()
                 self.owner_last_id = self.get_owner_id()
 
-                print("comeon func")
+                self.debuglog("comeon func")
 
                 await asyncio.sleep(15)    
                 if ctx.voice_client and ctx.voice_client.is_playing() == False:
@@ -126,13 +131,14 @@ class MusicBot(commands.Cog, User):
             self.clr_owner()
         else:
             await MusicBot.__isNotOwner(self, ctx)
-
+    '''
     @commands.command()
     async def forward(self, ctx, second: int):
     	if ctx.voice_client:
     		player = ctx.voice_client.source
     		print("playre: " +str(player))
-
+    '''
+    
     @gachi.before_invoke
     @yt.before_invoke
     async def __ensure_voice(self, ctx):
@@ -146,27 +152,27 @@ class MusicBot(commands.Cog, User):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        print("Voice state has been changed.")
+        self.debuglog("Voice state has been changed.")
         self.upd_user_channel(member.id, after.channel)
         bot_channel = self.get_bot_channel(self.bot.user.id)
 
         if after.channel and (member.id == self.get_owner_id or member.id == self.owner_last_id):
             if member.voice.channel:
                 if after.channel.id != self.owner_last_channel.id:
-                    print("owner leave channel")
+                    self.debuglog("owner leave channel")
                     self.clr_owner()
         
-            print("Get owner: " +str(self.get_owner_id()))
+            self.debuglog("Get owner: " +str(self.get_owner_id()))
 
             if(self.get_owner_id() is None):
                 if member.id == self.owner_last_id and after.channel.id == self.owner_last_channel.id and bot_channel and bot_channel.id == self.owner_last_channel.id: 
-                    print("Owner reconnect")
+                    self.debuglog("Owner reconnect")
                     self.set_owner(member.id)
         elif member.id == self.get_owner_id():
-            print("owner disconnect voice")
+            self.debuglog("owner disconnect voice")
             self.clr_owner()
 
-        self.print_users()
+        if self.debug_log: self.print_users()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -199,12 +205,12 @@ class MusicBot(commands.Cog, User):
             fulltime = float(player.time.total_seconds())
             delay = float(player.time.total_seconds() + 5.0)
 
-            print("delay time(full,delay): {0} , {1}".format(fulltime, delay))
+            self.debuglog("delay time(full,delay): {0} , {1}".format(fulltime, delay))
 
             if delay > 305:
                 delay = 305
 
-            print("To be sleep thread...")
+            self.debuglog("To be sleep thread...")
             await asyncio.sleep(delay)
 
             print("unsleep")
@@ -213,7 +219,7 @@ class MusicBot(commands.Cog, User):
                 self.clr_owner()
                 return
             else:
-                print("owner is not None or owner not change")
+                self.debuglog("owner is not None or owner not change")
 
             if(delay < fulltime):
                 await asyncio.sleep(fulltime - delay)
