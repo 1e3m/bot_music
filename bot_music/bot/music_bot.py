@@ -182,13 +182,13 @@ class MusicBot(commands.Cog, User):
     @commands.Cog.listener()
     async def on_member_join(self,member):
         #self.debug_log
-        print("user join on server: " + str(member.id))
+        #print("user join on server: " + str(member.id))
         self.add_user(member)
 
     @commands.Cog.listener()
     async def on_member_remove(self,member):
         #self.debug_log
-        print("user leave with server: " + str(member.id))
+        #print("user leave with server: " + str(member.id))
         self.remove_user(member.id)
 
     async def __yt(self, ctx, url, silent=False):

@@ -1,5 +1,6 @@
 import textwrap
 import datetime
+import os
 from discord.ext import commands
 from .github import Github
 from discord.utils import get
@@ -36,6 +37,11 @@ class TextBot(commands.Cog):
     async def pupk(self, ctx):
         """ !pubg alias """
         pass
+
+    @commands.command()
+    async def restart(self, ctx):
+        await ctx.send('I\'ll be back!' )
+        os.system('heroku restart --app') 
 
     @pubg.before_invoke
     @pupk.before_invoke
