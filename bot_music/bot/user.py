@@ -46,32 +46,35 @@ class User():
         self.debuglog("------------------------------------------------------------------------------------------------------")	
 
     def get_owner_id(self):
-    	for x in self.Users:
-    		if x.State == True:
-    			return x.Id
+        for x in self.Users:
+            if x.State == True:
+                self.debuglog("owner_id:" + str(x.Id))
+                return x.Id
 
     def get_owner_channel(self):
-    	for x in self.Users:
-    		if x.State == True:
-    			if x.Channel is not None:
-    				return x.Channel
+        for x in self.Users:
+            if x.State == True:
+                if x.Channel is not None:
+                    self.debuglog("Owner channel:" + str(x.Channel))
+                    return x.Channel
 
     def set_owner(self,Id):
-    	for x in self.Users:
+        for x in self.Users:
+            self.debuglog("for id: " + str(x.Id))
             if x.Id == Id:
                 x.State = True
-                self.debuglog("owner_id set to:" + str(x.Id))
+                self.debuglog("owner_id set to: " + str(x.Id))
 
     def upd_user_channel(self,Id,Channel):
-    	for x in self.Users:
+        for x in self.Users:
             if x.Id == Id:
                 x.Channel = Channel
-                self.debuglog("Channel set to:" + str(x.Channel))
+                self.debuglog("Channel set to: " + str(x.Channel))
 
     def clr_owner(self):
-    	for x in self.Users:
-    		x.State = False
-    	self.debuglog("Owner is clear")
+        for x in self.Users:
+            x.State = False
+            self.debuglog("Owner is clear")
 
     def get_bot_channel(self, Id):
         for x in self.Users:
@@ -79,10 +82,10 @@ class User():
                 return x.Channel
 
     def print_users(self):
-    	print("-----------------------------Users-----------------------------------------")
-    	for user in self.Users:
-    		user.cprint()
-    	print("-----------------------------------------------------------------------------------")
+        print("-----------------------------Users-----------------------------------------")
+        for user in self.Users:
+            user.cprint()
+        print("-----------------------------------------------------------------------------------")
 
     def debuglog(self,message: str):
         if self.debug_log:

@@ -14,8 +14,8 @@ class MusicBot(commands.Cog, User):
 
     
 
-	#id_channel = 570419462453592076	#release
-    id_channel = 570646876207054859		#test
+    id_channel = 570419462453592076	#release
+    #id_channel = 570646876207054859		#test
 
     def __init__(self, bot):
 
@@ -79,13 +79,13 @@ class MusicBot(commands.Cog, User):
     @commands.command()
     async def yt(self, ctx, *, url):
         """ Play from the given url / search for a song """
-
         if self.get_owner_id() is None:
             self.set_owner(ctx.author.id)
 
         if ctx.author.id == self.get_owner_id():
             if ctx.author.voice is not None:
                 if ctx.channel.id == MusicBot.id_channel:
+                    print('!url: ' + str(url) + ';\n !ctx: ' + str(ctx))
                     await self.__yt(ctx, url)
         else:
             await MusicBot.__isNotOwner(self, ctx)
@@ -142,9 +142,11 @@ class MusicBot(commands.Cog, User):
     @gachi.before_invoke
     @yt.before_invoke
     async def __ensure_voice(self, ctx):
+        print('ctx.voice_client: ' +str(ctx.voice_client))
         if ctx.voice_client is None:
             if ctx.author.voice:
                 await ctx.author.voice.channel.connect()
+                print('Connect to:' +str(ctx.author.voice.channel))
             else:
                 await ctx.send("You are not connected to a voice channel.")
         elif ctx.voice_client.is_playing():
@@ -172,7 +174,7 @@ class MusicBot(commands.Cog, User):
             self.debuglog("owner disconnect voice")
             self.clr_owner()
 
-        if self.debug_log: self.print_users()
+        #if self.debug_log: self.print_users()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -190,6 +192,10 @@ class MusicBot(commands.Cog, User):
         #self.debug_log
         #print("user leave with server: " + str(member.id))
         self.remove_user(member.id)
+
+    @yt.error
+    async def yt_on_error(self, ctx, error):
+        await ctx.send("error")
 
     async def __yt(self, ctx, url, silent=False):
         async with ctx.typing():        	

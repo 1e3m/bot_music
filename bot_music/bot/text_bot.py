@@ -41,7 +41,7 @@ class TextBot(commands.Cog):
     @commands.command()
     async def restart(self, ctx):
         await ctx.send('I\'ll be back!' )
-        os.system('heroku restart --app') 
+        os.system('DELETE \/apps\/gachi-bot-app\/dynos') 
 
     @pubg.before_invoke
     @pupk.before_invoke
