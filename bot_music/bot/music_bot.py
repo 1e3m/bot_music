@@ -19,7 +19,7 @@ class MusicBot(commands.Cog, User):
 
     def __init__(self, bot):
 
-        self.debug_log = True
+        self.debug_log = False
 
         self.bot = bot
         self.volume_lvl = 0.5
@@ -54,11 +54,12 @@ class MusicBot(commands.Cog, User):
                 self.debuglog("comeon func")
 
                 await asyncio.sleep(15)    
-                if ctx.voice_client and ctx.voice_client.is_playing() == False:
-                    await ctx.voice_client.disconnect()
-                    self.clr_owner()
-                    self.owner_last_channel = None
-                    self.owner_last_id = None
+                if ctx.voice_client and ctx.voice_client.is_playing() == False:                    
+                    if self.get_owner_id():
+                        await ctx.voice_client.disconnect()
+                        self.clr_owner()
+                        self.owner_last_channel = None
+                        self.owner_last_id = None
         else:
             await MusicBot.__isNotOwner(self, ctx)
 
@@ -85,7 +86,7 @@ class MusicBot(commands.Cog, User):
         if ctx.author.id == self.get_owner_id():
             if ctx.author.voice is not None:
                 if ctx.channel.id == MusicBot.id_channel:
-                    print('!url: ' + str(url) + ';\n !ctx: ' + str(ctx))
+                    #print('!url: ' + str(url) + ';\n !ctx: ' + str(ctx))
                     await self.__yt(ctx, url)
         else:
             await MusicBot.__isNotOwner(self, ctx)
@@ -142,15 +143,42 @@ class MusicBot(commands.Cog, User):
     @gachi.before_invoke
     @yt.before_invoke
     async def __ensure_voice(self, ctx):
-        print('ctx.voice_client: ' +str(ctx.voice_client))
+        '''
+        print('__ensure_voice ctx.voice_client: ' +str(ctx.voice_client))
         if ctx.voice_client is None:
             if ctx.author.voice:
+                print('__ensure_voice ctx.author.voice: ' +str(ctx.author.voice))
                 await ctx.author.voice.channel.connect()
                 print('Connect to:' +str(ctx.author.voice.channel))
             else:
                 await ctx.send("You are not connected to a voice channel.")
         elif ctx.voice_client.is_playing():
-            ctx.voice_client.stop()
+            ctx.voice_client.stop()'''
+        channel = None
+
+        if ctx.author.voice and ctx.author.voice.channel:   
+            if not channel:
+                try:
+                    channel = ctx.author.voice.channel
+                except AttributeError:
+                    raise InvalidVoiceChannel('No channel to join. Please either specify a valid channel or join one.')
+
+        vc = ctx.voice_client
+        if channel:
+            if vc:
+                if vc.channel.id == channel.id:
+                    return
+                try:
+                    await vc.move_to(channel)
+                except asyncio.TimeoutError:
+                    raise VoiceConnectionError(f'Moving to channel: <{channel}> timed out.')
+            else:
+                try:
+                    await channel.connect()
+                except asyncio.TimeoutError:
+                    raise VoiceConnectionError(f'Connecting to channel: <{channel}> timed out.')
+        else:
+            await ctx.send("You are not connected to a voice channel.")
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
@@ -195,6 +223,7 @@ class MusicBot(commands.Cog, User):
 
     @yt.error
     async def yt_on_error(self, ctx, error):
+        print('Error: ' + str(error))
         await ctx.send("error")
 
     async def __yt(self, ctx, url, silent=False):
@@ -231,7 +260,8 @@ class MusicBot(commands.Cog, User):
             await asyncio.sleep(delay)
 
             print("unsleep")
-            if self.get_owner_id() is None:
+            #if self.get_owner_id() is None and ctx.voice_client is not None and ctx.voice_client.is_playing() == False:
+            if self.__checkVoiceState(ctx):
                 await ctx.voice_client.disconnect()
                 self.clr_owner()
                 return
@@ -241,7 +271,8 @@ class MusicBot(commands.Cog, User):
             if(delay < fulltime):
                 await asyncio.sleep(fulltime - delay)
 
-            if ctx.voice_client is not None:
+            #if ctx.voice_client is not None and ctx.voice_client is not None and ctx.voice_client.is_playing() == False:
+            if self.__checkVoiceState(ctx):
                 await ctx.voice_client.disconnect()
                 self.clr_owner()
                 self.owner_last_channel = None
@@ -261,5 +292,11 @@ class MusicBot(commands.Cog, User):
         if ctx.author.id == self.get_owner_id():
             if ctx.channel.id == MusicBot.id_channel:
                 return True
-        return False    	
+        return False
+
+    def __checkVoiceState(self, ctx):
+        if ctx.voice_client and ctx.voice_client.is_playing() == False:
+            return True
+        else:
+            return False        	
 

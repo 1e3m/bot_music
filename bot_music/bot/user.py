@@ -64,12 +64,14 @@ class User():
             if x.Id == Id:
                 x.State = True
                 self.debuglog("owner_id set to: " + str(x.Id))
+                return
 
     def upd_user_channel(self,Id,Channel):
         for x in self.Users:
             if x.Id == Id:
                 x.Channel = Channel
                 self.debuglog("Channel set to: " + str(x.Channel))
+                pass
 
     def clr_owner(self):
         for x in self.Users:
