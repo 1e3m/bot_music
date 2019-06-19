@@ -5,6 +5,7 @@ from discord.ext import commands
 
 from bot.music_bot import MusicBot
 from bot.text_bot import TextBot
+from bot.memes_bot import MemesBot
 
 
 if not discord.opus.is_loaded():
@@ -17,6 +18,7 @@ bot = commands.Bot(
 )
 bot.add_cog(MusicBot(bot))
 bot.add_cog(TextBot(bot))
+bot.add_cog(MemesBot(bot))
 
 
 @bot.event
