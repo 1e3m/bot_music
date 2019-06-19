@@ -1,8 +1,7 @@
 import discord
 import asyncio
-#import nest_asyncio
-
-#nest_asyncio.apply()
+import json
+import aiohttp
 
 
 from requests_html import AsyncHTMLSession
@@ -17,6 +16,7 @@ class MemesBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.url = 'https://admem.ru/rndm'
+        self.joke_url = 'http://rzhunemogu.ru/RandJSON.aspx?CType=1'
         self.asession = AsyncHTMLSession()
 
     @commands.Cog.listener()
@@ -61,3 +61,17 @@ class MemesBot(commands.Cog):
             img = noindex.xpath('//img')[0]
 
             await ctx.send('http:' + img.attrs['src'])
+
+    @commands.command()
+    async def joke(self,ctx):
+        """ Send joke on channel """  
+        async with aiohttp.ClientSession() as sess:
+            async with sess.get(self.joke_url) as resp:
+
+                text = (await resp.text()).replace('\r\n', '\\r\\n')
+
+                data = json.loads(text)
+                joke = data['content']
+
+        await ctx.send( '```' + str(joke) + '```')
+
