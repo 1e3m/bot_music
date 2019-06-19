@@ -25,5 +25,5 @@ bot.add_cog(MemesBot(bot))
 async def on_ready():
     print('Logged in as:\n{0} (ID: {0.id})'.format(bot.user))
 
-#bot.run(os.environ['GACHIBOT_TOKEN'])
+bot.run(os.environ['GACHIBOT_TOKEN'])
 
