@@ -16,6 +16,7 @@ class MemesBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.url = 'https://admem.ru/rndm'
+        self.atkritka_url = 'http://atkritka.com/random_ok/'
         self.joke_url = 'http://rzhunemogu.ru/RandJSON.aspx?CType=1'
         self.asession = AsyncHTMLSession()
 
@@ -59,6 +60,23 @@ class MemesBot(commands.Cog):
             response = await get_code() 
             noindex = response.html.find('noindex', first=True)
             img = noindex.xpath('//img')[0]
+
+            await ctx.send('http:' + img.attrs['src'])
+            
+    @commands.command()
+    async def atkritka(self, ctx):
+        """ Send meme on channel """        
+        if ctx.channel.id == MemesBot.mem_text_channel:  
+
+            async def get_code():
+                r = await self.asession.get(self.atkritka_url)
+                await r.html.arender(sleep=1, keep_page=True)
+                return r
+
+            response = await get_code() 
+            content = response.html.find('content', first=True)
+            detail = content.html.find('detailt', first=True)
+            img = detail.xpath('//img')[0]
 
             await ctx.send('http:' + img.attrs['src'])
 
